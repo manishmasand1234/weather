@@ -1,79 +1,99 @@
-import { useState } from 'react';
-import './App.css';
+import { useState } from "react";
+import "./App.css";
 
 function App() {
+  const [city, setCity] = useState("");
+  const [wDetails, setWdetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  let [city , setCity] = useState('');
+  const handleClick = async (event) => {
+    event.preventDefault(); // Prevents form from refreshing the page
 
-  let [wDetails , setWdetails ] = useState();
+    if (!city.trim()) {
+      alert("Please enter a city name first.");
+      return;
+    }
 
-  let [ isloading , setIsloading] = useState(false);
+    setIsLoading(true);
 
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=751d66e130befad396405dc13796a57c&units=metric`
+      );
+      const finalres = await response.json();
 
-  let getData=(event)=>{
-    setIsloading(true);
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=751d66e130befad396405dc13796a57c&units=metric`).then((res)=>res.json())
-    .then((finalres)=>{
-      if(finalres.cod == '404'){
-        setWdetails(undefined)
-      }else{
+      if (finalres.cod === 200) {
         setWdetails(finalres);
+      } else {
+        setWdetails(null);
       }
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      setWdetails(null);
+    }
 
-      setIsloading(false);
-    })
-
-    event.preventDefault();
-    setCity('');
-  }
-
+    setIsLoading(false);
+    setCity(""); // Reset input field
+  };
 
   return (
     <div className="App">
       <div>
+        <h1>CHECK WEATHER OF ANY CITY HERE</h1>
 
-        <div>
-          <h1>CHECK WEATHER OF ANY CITY HERE</h1>
-          </div>
+        <form>
+          <input
+            type="text"
+            className="input"
+            placeholder="Enter the city name"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
+          <button type="submit" className="button-85" onClick={handleClick}>
+            Check Weather
+          </button>
+        </form>
 
-          <div>
-            <form onSubmit={getData}>
-              <input type="text" className='input' placeholder='Enter the city name' value={city} onChange={(e)=>setCity(e.target.value)} />
-            <button className='button-85'>Check Weather</button>
-            </form>
-            
-          </div>
-
-
-          <div className='data'>
-
-            <img src="https://cdn.dribbble.com/users/2973561/screenshots/5757826/loading__.gif" className={`${isloading ? 'loading' : 'hidden'}`}
-            
+        <div className="showData">
+        <div className="data">
+          {isLoading && (
+            <img
+              src="https://cdn.dribbble.com/users/2973561/screenshots/5757826/loading__.gif"
+              className="loading"
+              alt="Loading..."
             />
+          )}
 
-            {wDetails !== undefined
-            ? 
+          {wDetails ? (
             <>
-            <h3>{wDetails.name} <span>{wDetails.sys.country}</span></h3>
-            <h2>temp: &emsp; {wDetails.main.temp} &ensp; <span><sup>o</sup>C</span></h2>
-            <img src={`http://openweathermap.org/img/w/${wDetails.weather[0].icon}.png`}/>
-            <p>
-              {wDetails.weather[0].description}
-            </p>
-            <h3>MaxTemp  :  {wDetails.main.temp_max} <sup>o</sup>C</h3>
-            <h3>MinTemp   :   {wDetails.main.temp_min}  <sup>o</sup>C</h3>
+              <h3>
+                {wDetails.name} <span>{wDetails.sys.country}</span>
+              </h3>
+              <h2>
+                Temp: &emsp; {wDetails.main.temp} &ensp;
+                <span>
+                  <sup>o</sup>C
+                </span>
+              </h2>
+              <img
+                 className="logoImg"
+                src={`http://openweathermap.org/img/w/${wDetails.weather[0].icon}.png`}
+                alt="Weather icon"
+              />
+              <p>{wDetails.weather[0].description}</p>
+              <h3>
+                Max Temp: {wDetails.main.temp_max} <sup>o</sup>C
+              </h3>
+              <h3>
+                Min Temp: {wDetails.main.temp_min} <sup>o</sup>C
+              </h3>
             </>
-            
-            :
-            <>
-            <h1 className='NoData'>'NO Data found'</h1>
-            </>
-            }
-
-
-            
-          </div>
-
+          ) : (
+            !isLoading && <h1 className="NoData">NO Data Found</h1>
+          )}
+        </div>
+        </div>
+        
       </div>
     </div>
   );
